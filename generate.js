@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const MODEL = "gemini-2.5-flash";
+// const MODEL = "gemma-3-27b";
 const STRUCTURE_FILE = "structure.json";
 const PROGRESS_FILE = "progress.json";
 
