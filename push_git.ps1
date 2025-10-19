@@ -1,5 +1,5 @@
 # =============================
-# Git Commit & Push (New + Modified Files) with LFS + Appendable Logging
+# Git Commit & Push (Per File) with LFS + Appendable Logging
 # =============================
 
 # --- CONFIG ---
@@ -16,11 +16,11 @@ function Log($message) {
 }
 
 # --- INITIAL LOG ---
-Log "`n=== Starting Git Commit & Push for All Changes ===`n"
+Log "`n=== Starting Git Commit & Push Per File ===`n"
 
 # --- CHECK GIT REPO ---
 if (-not (Test-Path ".git")) {
-    Log "Not a Git repository. Please run this script from the repo root."
+    Log "❌ Not a Git repository. Please run this script from the repo root."
     exit
 }
 
@@ -33,7 +33,7 @@ $modified = git ls-files -m
 $deleted = git ls-files -d
 
 if (-not $untracked -and -not $modified -and -not $deleted) {
-    Log "No changes found to commit."
+    Log "✅ No changes found to commit."
     exit
 }
 
@@ -55,6 +55,11 @@ foreach ($file in $untracked) {
     $commitMessage = "Add new file: $file"
     git commit -m "$commitMessage" | Out-Null
     Log "Committed new file: $file"
+
+    # --- PUSH IMMEDIATELY ---
+    Log "Pushing $file to $remote/$branch ..."
+    git push -u $remote $branch | Out-Null
+    Log "Pushed $file successfully."
 }
 
 # --- PROCESS MODIFIED FILES ---
@@ -73,6 +78,11 @@ foreach ($file in $modified) {
     $commitMessage = "Update modified file: $file"
     git commit -m "$commitMessage" | Out-Null
     Log "Committed modified file: $file"
+
+    # --- PUSH IMMEDIATELY ---
+    Log "Pushing $file to $remote/$branch ..."
+    git push -u $remote $branch | Out-Null
+    Log "Pushed $file successfully."
 }
 
 # --- HANDLE DELETED FILES ---
@@ -81,22 +91,25 @@ foreach ($file in $deleted) {
     $commitMessage = "Remove deleted file: $file"
     git commit -m "$commitMessage" | Out-Null
     Log "Committed file deletion: $file"
-}
 
-# --- PUSH ALL COMMITS ---
-Log "Pushing all commits to $remote/$branch ..."
-git push -u $remote $branch | Out-Null
-Log "Push completed successfully."
+    # --- PUSH IMMEDIATELY ---
+    Log "Pushing deletion of $file to $remote/$branch ..."
+    git push -u $remote $branch | Out-Null
+    Log "Pushed deletion of $file successfully."
+}
 
 # --- COMMIT AND PUSH LFS ATTRIBUTES ---
 if (Test-Path ".gitattributes") {
     git add .gitattributes | Out-Null
     git commit -m "Add/Update Git LFS attributes" | Out-Null
+    Log "Committed .gitattributes"
+
+    Log "Pushing .gitattributes to $remote/$branch ..."
     git push -u $remote $branch | Out-Null
-    Log ".gitattributes committed and pushed."
+    Log "Pushed .gitattributes successfully."
 }
 
 # --- FINAL LOG ---
-Log "`nAll new and modified files processed."
+Log "`n✅ All new, modified, and deleted files processed."
 Log "Large files tracked in $largeFilesLog."
-Log "`n=== Git Push Complete ===`n"
+Log "`n=== Git Push Per File Complete ===`n"
