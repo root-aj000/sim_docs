@@ -293,8 +293,18 @@
     "U:/docs/apps/sim/lib/chunkers/index.ts",
     "U:/docs/apps/sim/lib/chunkers/json-yaml-chunker.ts",
     "U:/docs/apps/sim/lib/chunkers/structured-data-chunker.ts",
-    "U:/docs/apps/sim/lib/chunkers/text-chunker.ts"
+    "U:/docs/apps/sim/lib/chunkers/text-chunker.ts",
+    "U:/docs/apps/sim/executor/tests/nested-router-condition.test.ts",
+    "U:/docs/apps/sim/lib/chunkers/types.ts",
+    "U:/docs/apps/sim/lib/copilot/api.ts",
+    "U:/docs/apps/sim/lib/copilot/auth.ts",
+    "U:/docs/apps/sim/lib/copilot/config.ts",
+    "U:/docs/apps/sim/lib/copilot/process-contents.ts",
+    "U:/docs/apps/sim/lib/copilot/prompts.ts",
+    "U:/docs/apps/sim/lib/copilot/registry.ts",
+    "U:/docs/apps/sim/lib/copilot/types.ts",
+    "U:/docs/apps/sim/lib/copilot/utils.ts"
   ],
   "date": "2025-10-19",
-  "count": 219
+  "count": 229
 }
