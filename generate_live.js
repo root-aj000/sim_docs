@@ -1,55 +1,19 @@
-import WebSocket from 'ws';
-import dotenv from 'dotenv';
-
+import fetch from "node-fetch";
+import dotenv from "dotenv";
 dotenv.config();
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const MODEL_ID = 'gemini-2.5-flash-live'; // Replace with your desired model ID
+const GEMINI_API_KEY = process.env.GOOGLE_API_KEYS;
 
-if (!GEMINI_API_KEY) {
-  console.error('API key is missing. Please set it in the .env file.');
-  process.exit(1);
-}
-
-const ws = new WebSocket('wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent', {
-  headers: {
-    Authorization: `Bearer ${GEMINI_API_KEY}`,
-  },
-});
-
-ws.on('open', () => {
-  console.log('Connected to Gemini Live API');
-
-  const sessionConfig = {
-    model: MODEL_ID,
-    generationConfig: {
-      candidateCount: 1,
-      maxOutputTokens: 200,
-      temperature: 0.7,
-      topP: 0.9,
-      topK: 50,
-      presencePenalty: 0.0,
-      frequencyPenalty: 0.0,
-      responseModalities: ['TEXT'],
-    },
-    systemInstruction: 'You are a helpful assistant.',
-    tools: [],
-  };
-
-  ws.send(JSON.stringify({ bidiGenerateContentSetup: sessionConfig }));
-});
-
-ws.on('message', (data) => {
-  const response = JSON.parse(data);
-  if (response.bidiGenerateContentResponse) {
-    console.log('Received response:', response.bidiGenerateContentResponse);
+const response = await fetch(
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts: [{ text: "Hello Gemini! what is your name and model gemini 2.0 or gemini 2.5 flash" }] }],
+    }),
   }
-});
+);
 
-ws.on('close', () => {
-  console.log('Connection closed');
-});
-
-ws.on('error', (error) => {
-  console.error('WebSocket error:', error);
-});
+const data = await response.json();
+console.log(data.candidates?.[0]?.content?.parts?.[0]?.text);
