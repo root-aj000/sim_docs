@@ -256,8 +256,11 @@
     "U:/docs/apps/sim/executor/loops/loops.test.ts",
     "U:/docs/apps/sim/executor/loops/loops.ts",
     "U:/docs/apps/sim/executor/parallels/parallels.ts",
-    "U:/docs/apps/sim/executor/parallels/utils.ts"
+    "U:/docs/apps/sim/executor/parallels/utils.ts",
+    "U:/docs/apps/sim/executor/parallels/parallels.test.ts",
+    "U:/docs/apps/sim/executor/path/path.test.ts",
+    "U:/docs/apps/sim/executor/path/path.ts"
   ],
   "date": "2025-10-19",
-  "count": 182
+  "count": 185
 }
