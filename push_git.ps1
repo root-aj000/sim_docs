@@ -1,9 +1,9 @@
 # =============================
-# Git Single-File Commit & Push with LFS and Appendable Logging
+# Git Commit & Push (New + Modified Files) with LFS + Appendable Logging
 # =============================
 
 # --- CONFIG ---
-$branch = "master"              # Branch name (change to 'main' if needed)
+$branch = "master"              # Change to 'main' if needed
 $remote = "origin"              # Remote name
 $maxFileSizeMB = 100            # Skip files larger than this (GitHub limit)
 $largeFilesLog = "large_files.txt"
@@ -16,7 +16,7 @@ function Log($message) {
 }
 
 # --- INITIAL LOG ---
-Log "`n=== Starting single-file Git commits ===`n"
+Log "`n=== Starting Git Commit & Push for All Changes ===`n"
 
 # --- CHECK GIT REPO ---
 if (-not (Test-Path ".git")) {
@@ -27,46 +27,76 @@ if (-not (Test-Path ".git")) {
 # --- INITIALIZE LFS ---
 git lfs install | Out-Null
 
-# --- GET ALL NON-IGNORED FILES ---
-$allFiles = git ls-files -o --exclude-standard
-if (-not $allFiles) {
-    Log "No non-ignored files found to commit."
+# --- GATHER FILES ---
+$untracked = git ls-files -o --exclude-standard
+$modified = git ls-files -m
+$deleted = git ls-files -d
+
+if (-not $untracked -and -not $modified -and -not $deleted) {
+    Log "No changes found to commit."
     exit
 }
 
-# --- PROCESS FILES ---
-foreach ($file in $allFiles) {
+# --- PROCESS UNTRACKED FILES ---
+foreach ($file in $untracked) {
     $fullPath = Join-Path (Get-Location) $file
+    if (-not (Test-Path $fullPath)) { continue }
+
     $fileSizeMB = [math]::Round((Get-Item $fullPath).Length / 1MB, 2)
 
     if ($fileSizeMB -gt $maxFileSizeMB) {
-        # Track with Git LFS
         git lfs track "$file" | Out-Null
         Add-Content -Path $largeFilesLog -Value "$file ($fileSizeMB MB)"
-        Log "Skipping large file (tracked by LFS): $file ($fileSizeMB MB)"
+        Log "Skipped large file (LFS tracked): $file (${fileSizeMB} MB)"
         continue
     }
 
-    # Stage file
-    git add -- $file
-
-    # Commit
-    $commitMessage = "update $file"
+    git add -- "$file"
+    $commitMessage = "Add new file: $file"
     git commit -m "$commitMessage" | Out-Null
-
-    # Push
-    Log "Pushing $file to $remote/$branch ..."
-    git push -u $remote $branch | Out-Null
-    Log "$file pushed successfully."
+    Log "Committed new file: $file"
 }
 
-# --- COMMIT AND PUSH .gitattributes CREATED BY LFS ---
+# --- PROCESS MODIFIED FILES ---
+foreach ($file in $modified) {
+    if (-not (Test-Path $file)) { continue }
+
+    $fileSizeMB = [math]::Round((Get-Item $file).Length / 1MB, 2)
+    if ($fileSizeMB -gt $maxFileSizeMB) {
+        git lfs track "$file" | Out-Null
+        Add-Content -Path $largeFilesLog -Value "$file ($fileSizeMB MB)"
+        Log "Skipped modified large file (LFS tracked): $file (${fileSizeMB} MB)"
+        continue
+    }
+
+    git add -- "$file"
+    $commitMessage = "Update modified file: $file"
+    git commit -m "$commitMessage" | Out-Null
+    Log "Committed modified file: $file"
+}
+
+# --- HANDLE DELETED FILES ---
+foreach ($file in $deleted) {
+    git rm "$file" | Out-Null
+    $commitMessage = "Remove deleted file: $file"
+    git commit -m "$commitMessage" | Out-Null
+    Log "Committed file deletion: $file"
+}
+
+# --- PUSH ALL COMMITS ---
+Log "Pushing all commits to $remote/$branch ..."
+git push -u $remote $branch | Out-Null
+Log "Push completed successfully."
+
+# --- COMMIT AND PUSH LFS ATTRIBUTES ---
 if (Test-Path ".gitattributes") {
     git add .gitattributes | Out-Null
-    git commit -m "Add Git LFS attributes" | Out-Null
+    git commit -m "Add/Update Git LFS attributes" | Out-Null
     git push -u $remote $branch | Out-Null
     Log ".gitattributes committed and pushed."
 }
 
-Log "`nAll non-ignored files processed. Large files logged in $largeFilesLog."
-Log "`n=== Git push completed ===`n"
+# --- FINAL LOG ---
+Log "`nAll new and modified files processed."
+Log "Large files tracked in $largeFilesLog."
+Log "`n=== Git Push Complete ===`n"
